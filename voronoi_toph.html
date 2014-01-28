@@ -67,7 +67,7 @@ svg {
 var months,
     monthFormat = d3.time.format("%Y-%m");
 
-var margin = {top: 20, right: 30, bottom: 30, left: 40},
+var margin = {top: 20, right: 60, bottom: 30, left: 40},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
@@ -113,19 +113,34 @@ d3.tsv("market_cap_toph.tsv", type, function(error, cities) {
         .scale(y)
         .orient("left")
 		.tickFormat(function(d) { return "$" + d/1000000000 + "b"})
-		.ticks(6))
+		.ticks(4))
     .append("text")
       .attr("x", 4)
       .attr("dy", ".32em")
       .style("font-weight", "bold")
       .text("Market capitalization");
-
+  
+  svg.append("line")
+        .attr(
+        {
+            "class":"horizontalGrid",
+            "x1" : 0,
+            "x2" : width,
+            "y1" : y(150000000000),
+            "y2" : y(150000000000),
+            "fill" : "none",
+            "shape-rendering" : "crispEdges",
+            "stroke" : "black",
+            "stroke-width" : "1px"
+        });
+  
   svg.append("g")
       .attr("class", "cities")
     .selectAll("path")
       .data(cities)
     .enter().append("path")
-      .attr("d", function(d) { d.line = this; return line(d.values); });
+      .attr("d", function(d) { d.line = this; return line(d.values); })
+	  .style("stroke", function(d) { if (d.name == "FB US Equity") {return "#0f0"} });
 
   var focus = svg.append("g")
       .attr("transform", "translate(-100,-100)")
