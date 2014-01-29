@@ -7,11 +7,9 @@ body {
   margin: auto;
   position: relative;
   cursor:url(green.gif), auto;
+  font-family: Helvetica;
 }
 
-svg {
-  font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
 
 .axis path,
 .axis line {
@@ -26,16 +24,12 @@ svg {
 
 .companies {
   fill: none;
-  stroke: #aaa;
   stroke-linejoin: round;
   stroke-linecap: round;
-  stroke-width: 1.5px;
+  stroke-width: 3px;
 }
 
-.focus text {
-  text-anchor: middle;
-  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
-}
+
 
 .voronoi path {
   fill: none;
@@ -56,13 +50,26 @@ svg {
 .companies path {
   fill: none;
   stroke: url(#temperature-gradient);
-  stroke-width: 1.5px;
+  stroke-width: 3px;
 }
 
-.city--hover {
+.company-hover {
   fill: none;
   stroke: #ff00ff !important;
-  stroke-width: 1.5px;
+  stroke-width: 3px;
+}
+
+.company_name {
+  font-size: 14px;
+  font-weight: bold;
+  text-anchor: middle;
+  text-shadow: 0 2px 0 #fff, 2px 0 0 #fff, 0 -2px 0 #fff, -2px 0 0 #fff;
+}
+
+.madbills {
+  font-size: 14px;
+    text-anchor: middle;
+  text-shadow: 0 2px 0 #fff, 2px 0 0 #fff, 0 -2px 0 #fff, -2px 0 0 #fff;
 }
 
 </style>
@@ -78,7 +85,7 @@ svg {
 var months,
     monthFormat = d3.time.format("%Y-%m");
 
-var margin = {top: 20, right: 60, bottom: 30, left: 40},
+var margin = {top: 40, right: 60, bottom: 30, left: 60},
     width = 970 - margin.left - margin.right,
     height = 670 - margin.top - margin.bottom;
 
@@ -86,7 +93,7 @@ var x = d3.time.scale()
     .range([0, width]);
 
 var y = d3.scale.linear()
-    .range([height, height/2, 0]);
+    .range([height, height/3, 0]);
 
 var color = d3.scale.category20();
 
@@ -134,30 +141,32 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
       .attr("transform", "translate(0," + height + ")")
       .call(d3.svg.axis()
         .ticks(4)
+        .innerTickSize(15)
+        .outerTickSize(0)
         .scale(x)
         .orient("bottom"));
 
   svg.append("g")
       .attr("class", "axis axis--y")
       .call(d3.svg.axis()
-        .scale(y)
-        .orient("left")
-		.tickFormat(function(d) { return "$" + d/1000000000 + "b"})
-		.ticks(4))
-    .append("text")
+      .scale(y)
+      .orient("left")
+		  .tickFormat(function(d) { return "$" + d/1000000000 + "b"})
+		  .ticks(0))
+      .append("text")
       .attr("x", 4)
       .attr("dy", ".32em")
       .style("font-weight", "bold")
-      .text("Market capitalization");
+      .text("Market Capitalization");
 
   
   svg.append("g")
       .attr("class", "companies")
-    .selectAll("path")
+      .selectAll("path")
       .data(companies)
-    .enter().append("path")
+      .enter().append("path")
       .attr("d", function(d) { d.line = this; return line(d.values); })
-	  .style("stroke", function(d) { if (d.name == "FB US Equity") {return "#0f0"} });
+	   .style("stroke", function(d) { if (d.name == "Facebook") {return "#0f0"} });
 
 
   svg.append("line")
@@ -171,47 +180,54 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
             "fill" : "none",
             "shape-rendering" : "crispEdges",
             "stroke" : "black",
-            "stroke-width" : "3px"
+            "stroke-width" : "3px",
+            "stroke-dasharray": ("3, 3")
         });
 
   var focus = svg.append("g")
       .attr("transform", "translate(-100,-100)")
       .attr("class", "focus");
 
-  focus.append("circle")
-      .attr("r", 3.5);
+      focus.append("circle")
+          .attr("r", 3.5);
 
-  focus.append("text")
-      .attr("y", -10);
+      focus.append("text")
+          .attr("y", -27)
+          .attr("class", "company_name");
+
+       focus.append("text")
+          .attr("y", -10)
+          .attr("class", "madbills");
 
   var voronoiGroup = svg.append("g")
       .attr("class", "voronoi");
 
   voronoiGroup.selectAll("path")
       .data(voronoi(d3.nest()
-          .key(function(d) { return x(d.date) + "," + y(d.value); })
+          .key(function(d) { if (d.value > 0) {return x(d.date) + "," + y(d.value)}  else    { return null } })
           .rollup(function(v) { return v[0]; })
           .entries(d3.merge(companies.map(function(d) { return d.values; })))
           .map(function(d) { return d.values; })))
-    .enter().append("path")
-      .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
-      .datum(function(d) { return d.point; })
-      .on("mouseover", mouseover)
-      .on("mouseout", mouseout);
+          .enter().append("path")
+         .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
+        .datum(function(d) { return d.point; })
+        .on("mouseover", mouseover)
+        .on("mouseout", mouseout);
 
   d3.select("#show-voronoi")
       .property("disabled", false)
       .on("change", function() { voronoiGroup.classed("voronoi--show", this.checked); });
 
   function mouseover(d) {
-    d3.select(d.city.line).classed("city--hover", true);
+    d3.select(d.city.line).classed("company-hover", true);
     d.city.line.parentNode.appendChild(d.city.line);
     focus.attr("transform", "translate(" + x(d.date) + "," + y(d.value) + ")");
-    focus.select("text").text(d.city.name + ": $" + Math.round(d.value/1000000000) + "b");
+    focus.select(".company_name").text(d.city.name);
+    focus.select(".madbills").text(" $" + Math.round(d.value/1000000000) + "b");
   }
 
   function mouseout(d) {
-    d3.select(d.city.line).classed("city--hover", false);
+    d3.select(d.city.line).classed("company-hover", false);
     focus.attr("transform", "translate(-100,-100)");
   }
 });
