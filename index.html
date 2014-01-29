@@ -26,7 +26,7 @@ body {
   fill: none;
   stroke-linejoin: round;
   stroke-linecap: round;
-  stroke-width: 3px;
+  stroke-width: 1px;
 }
 
 
@@ -50,13 +50,13 @@ body {
 .companies path {
   fill: none;
   stroke: url(#temperature-gradient);
-  stroke-width: 3px;
+  stroke-width: 1px;
 }
 
 .company-hover {
   fill: none;
   stroke: #ff00ff !important;
-  stroke-width: 3px;
+  stroke-width: 1px;
 }
 
 .company_name {
@@ -85,8 +85,8 @@ body {
 var months,
     monthFormat = d3.time.format("%Y-%m");
 
-var margin = {top: 40, right: 60, bottom: 30, left: 60},
-    width = 970 - margin.left - margin.right,
+var margin = {top: 40, right: 60, bottom: 330, left: 60},
+    width = 630 - margin.left - margin.right,
     height = 670 - margin.top - margin.bottom;
 
 var x = d3.time.scale()
@@ -180,7 +180,7 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
             "fill" : "none",
             "shape-rendering" : "crispEdges",
             "stroke" : "black",
-            "stroke-width" : "3px",
+            "stroke-width" : "1px",
             "stroke-dasharray": ("3, 3")
         });
 
@@ -218,6 +218,27 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
       .property("disabled", false)
       .on("change", function() { voronoiGroup.classed("voronoi--show", this.checked); });
 
+
+	//trying to do bars...
+	var y2 = d3.scale.ordinal()
+		.rangeRoundBands([0,width/6], .1);
+	d3.tsv("days_to_threshold.tsv", typeTimespan, function(error, timespan) {
+		y2.domain(timespan.map(function(d) { return d.name; }));
+		svg.append("g")
+		  .attr("class", "timespan")
+		  .attr("transform","translate(0,"+(height+30)+")")
+		  .selectAll("line")
+			.data(timespan).enter()
+				.append("line")
+				.attr("x1", function(d) { return x(d.ipo); })
+				.attr("x2", function(d) { return x(d.threshold); })
+				.attr("y1", function(d) { return y2(d.name); })
+				.attr("y2", function(d) { return y2(d.name); })
+				.style("stroke","black")
+				.style("stroke-width",0.5);
+	});
+
+
   function mouseover(d) {
     d3.select(d.city.line).classed("company-hover", true);
     d.city.line.parentNode.appendChild(d.city.line);
@@ -245,6 +266,19 @@ function type(d, i) {
       value: d[monthFormat(m)] * 1
     };
   });
+  return city;
+}
+
+function typeTimespan(d, i) {
+	console.log(d.ipo.substring(0,4));
+	console.log(d.ipo.substring(4,6));
+  var city = {
+    name: d.name,
+    ipo: new Date(d.ipo.substring(0,4),d.ipo.substring(5,7)),
+    threshold: new Date(d.threshold.substring(0,4),d.threshold.substring(5,7)),
+    days: d.days
+  };
+	console.log(city);
   return city;
 }
 
