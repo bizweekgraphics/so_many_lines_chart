@@ -3,8 +3,8 @@
 <style>
 
 body {
-  width: 960px;
-  margin: auto;
+  width: 630px;
+  margin: 0;
   position: relative;
   cursor:url(green.gif), auto;
   font-family: Helvetica;
@@ -60,16 +60,20 @@ body {
 }
 
 .company_name {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
   text-anchor: middle;
   text-shadow: 0 2px 0 #fff, 2px 0 0 #fff, 0 -2px 0 #fff, -2px 0 0 #fff;
 }
 
 .madbills {
-  font-size: 14px;
+  font-size: 12px;
     text-anchor: middle;
   text-shadow: 0 2px 0 #fff, 2px 0 0 #fff, 0 -2px 0 #fff, -2px 0 0 #fff;
+}
+
+text {
+	font-size: 12px;
 }
 
 </style>
@@ -93,7 +97,7 @@ var x = d3.time.scale()
     .range([0, width]);
 
 var y = d3.scale.linear()
-    .range([height, height/3, 0]);
+    .range([height, height/6, 0]);
 
 var color = d3.scale.category20();
 
@@ -149,13 +153,13 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
   svg.append("g")
       .attr("class", "axis axis--y")
       .call(d3.svg.axis()
-      .scale(y)
-      .orient("left")
-		  .tickFormat(function(d) { return "$" + d/1000000000 + "b"})
-		  .ticks(0))
+		  .scale(y)
+		  .orient("left")
+			  .tickFormat(function(d) { return "$" + d/1000000000 + "b"})
+			  .tickValues([0,150000000000,600000000000]))
       .append("text")
       .attr("x", 4)
-      .attr("dy", ".32em")
+      .attr("dy", "-2em")
       .style("font-weight", "bold")
       .text("Market Capitalization");
 
