@@ -24,7 +24,7 @@ svg {
   display: none;
 }
 
-.cities {
+.companies {
   fill: none;
   stroke: #aaa;
   stroke-linejoin: round;
@@ -53,7 +53,7 @@ svg {
   right: 30px;
 }
 
-.cities path {
+.companies path {
   fill: none;
   stroke: url(#temperature-gradient);
   stroke-width: 1.5px;
@@ -70,6 +70,10 @@ svg {
 </label>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
+
+
+//* OG mike bostock multi-series line chart here, don't trust us for anything: 
+//* http://bl.ocks.org/mbostock/3884955
 
 var months,
     monthFormat = d3.time.format("%Y-%m");
@@ -103,10 +107,10 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-d3.tsv("market_cap.tsv", type, function(error, cities) {
-  console.log(cities);
+d3.tsv("market_cap.tsv", type, function(error, companies) {
+  console.log(companies);
   x.domain(d3.extent(months));
-  y.domain([0, 150000000000, d3.max(cities, function(c) { return d3.max(c.values, function(d) { return d.value; }); })]).nice();
+  y.domain([0, 150000000000, d3.max(companies, function(c) { return d3.max(c.values, function(d) { return d.value; }); })]).nice();
 
   svg.append("linearGradient")
       .attr("id", "temperature-gradient")
@@ -148,9 +152,9 @@ d3.tsv("market_cap.tsv", type, function(error, cities) {
 
   
   svg.append("g")
-      .attr("class", "cities")
+      .attr("class", "companies")
     .selectAll("path")
-      .data(cities)
+      .data(companies)
     .enter().append("path")
       .attr("d", function(d) { d.line = this; return line(d.values); })
 	  .style("stroke", function(d) { if (d.name == "FB US Equity") {return "#0f0"} });
@@ -187,7 +191,7 @@ d3.tsv("market_cap.tsv", type, function(error, cities) {
       .data(voronoi(d3.nest()
           .key(function(d) { return x(d.date) + "," + y(d.value); })
           .rollup(function(v) { return v[0]; })
-          .entries(d3.merge(cities.map(function(d) { return d.values; })))
+          .entries(d3.merge(companies.map(function(d) { return d.values; })))
           .map(function(d) { return d.values; })))
     .enter().append("path")
       .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
