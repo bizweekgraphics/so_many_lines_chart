@@ -100,17 +100,6 @@ var line = d3.svg.line()
     .y(function(d) { return y(d.value); })
     .defined(function(d) { return d.value > 0; });
 
-
-
-var y2 = d3.scale.ordinal()
-	.rangeRoundBands([0,width], .1);
-var lineTimespan = d3.svg.line()
-	.x(function(d) { return x(d.date); })
-//	.y(10)
-	.y(function(d) { return y2(d.city.name); })
-	.defined(function(d) { return (d.value > 0 && d.value < 150000000000) });
-
-
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
@@ -121,9 +110,6 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
   //console.log(companies);
   x.domain(d3.extent(months));
   y.domain([0, 150000000000, d3.max(companies, function(c) { return d3.max(c.values, function(d) { return d.value; }); })]).nice();
-
-
-y2.domain(companies.map(function(d) { console.log(d); return d.name; }));
 
   svg.append("linearGradient")
       .attr("id", "temperature-gradient")
@@ -173,16 +159,6 @@ y2.domain(companies.map(function(d) { console.log(d); return d.name; }));
 	  .style("stroke", function(d) { if (d.name == "FB US Equity") {return "#0f0"} });
 
 
-  svg.append("g")
-      .attr("class", "timespan")
-    .selectAll("path")
-      .data(companies)
-    .enter().append("path")
-      .attr("d", function(d) { d.lineTimespan = this; return lineTimespan(d.values); })
-      .style("stroke", "black");
-
-
-
   svg.append("line")
         .attr(
         {
@@ -226,6 +202,29 @@ y2.domain(companies.map(function(d) { console.log(d); return d.name; }));
       .property("disabled", false)
       .on("change", function() { voronoiGroup.classed("voronoi--show", this.checked); });
 
+
+	//trying to do bars...
+	var y2 = d3.scale.ordinal()
+		.rangeRoundBands([0,width/3], .1);
+	d3.tsv("days_to_threshold.tsv", typeTimespan, function(error, timespan) {
+		y2.domain(timespan.map(function(d) { return d.name; }));
+		svg.append("g")
+		  .attr("class", "timespan")
+		  .selectAll("line")
+			.data(timespan).enter()
+				.append("line")
+				.attr("x1", function(d) { return x(d.ipo); })
+				.attr("x2", function(d) { return x(d.threshold); })
+				.attr("y1", function(d) { return y2(d.name); })
+				.attr("y2", function(d) { return y2(d.name); })
+				.style("stroke","black")
+				.style("stroke-width",0.5);
+	});
+
+
+
+
+
   function mouseover(d) {
     d3.select(d.city.line).classed("city--hover", true);
     d.city.line.parentNode.appendChild(d.city.line);
@@ -254,5 +253,17 @@ function type(d, i) {
   });
   return city;
 }
+
+function typeTimespan(d, i) {
+  var city = {
+    name: d.name,
+    ipo: new Date(d.ipo.substring(0,4),d.ipo.substring(4,2)),
+    threshold: new Date(d.threshold.substring(0,4),d.threshold.substring(4,2)),
+    days: d.days
+  };
+	console.log(city);
+  return city;
+}
+
 
 </script>
