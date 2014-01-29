@@ -23,7 +23,7 @@ svg {
   display: none;
 }
 
-.cities {
+.companies {
   fill: none;
   stroke: #aaa;
   stroke-linejoin: round;
@@ -32,7 +32,7 @@ svg {
 }
 
 .city--hover {
-  stroke: #000;
+  stroke: #00ff00;
 }
 
 .focus text {
@@ -75,7 +75,8 @@ var x = d3.time.scale()
     .range([0, width]);
 
 var y = d3.scale.linear()
-    .range([height, 0]);
+    .range([height, 0])
+    .domain([0,150000000000]);
 
 var color = d3.scale.category20();
 
@@ -85,19 +86,21 @@ var voronoi = d3.geom.voronoi()
     .clipExtent([[-margin.left, -margin.top], [width + margin.right, height + margin.bottom]]);
 
 var line = d3.svg.line()
+    .interpolate("basis")
     .x(function(d) { return x(d.date); })
-    .y(function(d) { return y(d.value); });
+    .y(function(d) { return y(d.value); })
+    .defined(function(d) { return d.value > 0; });
 
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
-  .append("g")
+    .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-d3.tsv("market_cap_toph.tsv", type, function(error, cities) {
-  console.log(cities);
+d3.tsv("market_cap_3.tsv", type, function(error, companies) {
+  console.log(companies);
   x.domain(d3.extent(months));
-  y.domain([0, d3.max(cities, function(c) { return d3.max(c.values, function(d) { return d.value; }); })]).nice();
+  //y.domain([0, d3.max(companies, function(c) { return d3.max(c.values, function(d) { return d.value; }); })]).nice();
 
   svg.append("g")
       .attr("class", "axis axis--x")
@@ -112,7 +115,7 @@ d3.tsv("market_cap_toph.tsv", type, function(error, cities) {
         .scale(y)
         .orient("left")
 		.tickFormat(function(d) { return "$" + d/1000000000 + "b"})
-		.ticks(6))
+		.ticks(4))
     .append("text")
       .attr("x", 4)
       .attr("dy", ".32em")
@@ -120,11 +123,13 @@ d3.tsv("market_cap_toph.tsv", type, function(error, cities) {
       .text("Market capitalization");
 
   svg.append("g")
-      .attr("class", "cities")
-    .selectAll("path")
-      .data(cities)
-    .enter().append("path")
-      .attr("d", function(d) { d.line = this; return line(d.values); });
+      .attr("class", "companies")
+      .selectAll("path")
+      .data(companies)
+      .enter().append("path")
+      .attr("d", function(d) { d.line = this; return line(d.values); })
+      .style("stroke", function(d) { if (d.name == "FB US Equity") {return "#0f0"}
+                                           else { return "#aaa" } });
 
   var focus = svg.append("g")
       .attr("transform", "translate(-100,-100)")
@@ -143,7 +148,7 @@ d3.tsv("market_cap_toph.tsv", type, function(error, cities) {
       .data(voronoi(d3.nest()
           .key(function(d) { return x(d.date) + "," + y(d.value); })
           .rollup(function(v) { return v[0]; })
-          .entries(d3.merge(cities.map(function(d) { return d.values; })))
+          .entries(d3.merge(companies.map(function(d) { return d.values; })))
           .map(function(d) { return d.values; })))
     .enter().append("path")
       .attr("d", function(d) { return "M" + d.join("L") + "Z"; })

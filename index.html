@@ -49,7 +49,7 @@ var x = d3.time.scale()
     .range([0, width]);
 
 var y = d3.scale.linear()
-    .domain([0,150000000000])
+    .domain([0,600000000000])
     .range([height, 0]);
 
 var color = d3.scale.ordinal()
@@ -70,6 +70,7 @@ var line = d3.svg.line()
     .interpolate("basis")
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.market_cap); });
+    //.defined(function(d) { return typeof(d.market_cap) === "string" ? false : true; });
 
 var svg = d3.select("#container").append("svg")
     .attr("width", width + margin.left + margin.right)

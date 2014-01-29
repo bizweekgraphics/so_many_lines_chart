@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 12px Helvetica;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+
+}
+
+.x.axis line {
+  display: none;
+}
+
+.network-line{
+  fill: none;
+  stroke-width: 3px;
+  opacity:.5;
+}
+
+
+
+.network_name {
+  font-weight: bold;
+  opacity:1;
+  padding-top: 15px;
+}
+
+#tooltip {
+  background: rgba(255, 255, 255, 0.95);
+  position:absolute;
+  height:auto;
+  visibility:hidden;
+  z-index:9999;
+  padding:5px;
+  border: 1px solid #ddd;
+  padding: 5px 3px 0px 5px;
+  font-family: arial, sans-serif;
+  -webkit-box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+  -moz-box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+}
+
+#main {
+  line-height: .5em;
+}
+
+#viewers, #show, #show_rating {
+  font-weight: bold !important;
+}
+
+#network, #year {
+  font-weight: bold;
+}
+
+.y-text {
+  font-weight: bold;
+}
+
+
+
+.data-line {
+  font-size:10px;
+position: absolute;
+left:300px;
+padding: 35px;
+}
+
+#wb {
+  position: absolute;
+  left: 328px;
+  top:415px;
+}
+
+#upn {
+  position: absolute;
+  left: 328px;
+  top:383px;
+}
+
+#cbs{
+  position: absolute;
+  left: 825px;
+  top:125px;
+}
+
+#abc{
+  position: absolute;
+  left: 825px;
+  top:212px;
+}
+
+#nbc{
+  position: absolute;
+  left: 825px;
+  top:225px;
+}
+
+#fox{
+  position: absolute;
+  left: 825px;
+  top:262px;
+}
+
+#pbs{
+  position: absolute;
+  left: 825px;
+  top:477px;
+}
+
+#ion{
+  position: absolute;
+  left: 825px;
+  top:508px;
+}
+
+#cw{
+  position: absolute;
+  left: 825px;
+  top:520px;
+}
+
+#mytv{
+  position: absolute;
+  left: 825px;
+  top:545px;
+}
+
+</style>
+<body>
+
+  <div id="tooltip">
+    <span id="network">hi</span>, <span id="year">year</span>
+    <p id="main">Average audience: <span id="viewers"></span></p>
+    <p id="main">Top show: <span id="show"></span> </p>
+  </div>
+
+  <div id="graphic"></div>
+  <div id="wb"><p class="network_name">WB</p></div>
+  <div id="upn"><p class="network_name">UPN</p></div>
+  <div id="cbs"><p class="network_name">CBS</p></div>
+  <div id="abc"><p class="network_name">ABC</p></div>
+  <div id="nbc"><p class="network_name">NBC</p></div>
+  <div id="fox"><p class="network_name">FOX</p></div>
+  <div id="pbs"><p class="network_name">PBS</p></div>
+  <div id="ion"><p class="network_name">ION</p></div>
+  <div id="cw"><p class="network_name">CW</p></div>
+  <div id="mytv"><p class="network_name">MyNetworkTV</p></div>
+
+  <div id="data"><p class="data-line">GRAPHIC BY BLOOMBERG BUSINESSWEEEK. DATA: HORIZON MEDIA, NIELSEN. </p></div>
+
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+
+<script>
+
+var margin = {top: 20, right: 90, bottom: 30, left: 100},
+    width = 900 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+var color = d3.scale.category10()
+
+var x = d3.scale.linear()
+    .range([0, width])
+    .domain([2002,2012])
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+    .tickFormat(function(d) { return d});
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .tickSize(5)
+    .ticks(8)
+    .orient("left")
+    .tickFormat(function(d) { return d + "m"});
+
+var line = d3.svg.line()
+    .x(function(d) { return x(d.year); })
+    .y(function(d) { return y(d.val); })
+    .defined(function(d) { return typeof(d.val) === "string" ? false : true; });
+
+
+var svg = d3.select("#graphic").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.csv("data4.csv", function(error, data) {
+ color.domain(d3.keys(data[0]).filter(function(key) { return key !== "year"; }));
+
+  data.forEach(function(d) {
+    d.year = +d.year;
+    if (d.val) {
+      d.val = +d.val;
+    }
+  });
+
+  viewersByNetwork = d3.nest()
+      .key(function(d) { return d.network})
+      .entries(data);
+
+  console.log(viewersByNetwork);
+
+  y.domain([0,d3.max(data.map(function(d) { return d.val; }))]);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
+
+   svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append("text")
+      .attr("class","y-text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -65)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Average primetime viewers during the week of September 23-29th");
+
+  var linesContainer = svg.append("g")
+
+  linesContainer.selectAll(".network-line")
+      .data(viewersByNetwork)
+      .enter()
+      .append("path")
+      .attr("class", "network-line")
+      .attr("d", function(d) { return line(d.values); }) 
+      .style("stroke", function(d) {return color(d.key); })
+      .on("mouseover", function(d){
+              d3.select(this)
+                .transition()
+                .duration(100)
+                .style("opacity",1)
+                  })
+        .on("mouseout", function(d){
+              d3.select(this)
+                .transition()
+                .style("opacity",.5)
+           });
+
+  var labelElements = svg.append("g")
+      .attr("class", "network_name");
+     
+
+  var label = labelElements.selectAll(".g-label-element")
+      .data(data.filter(function(d) { return typeof(d.val) === "string" ? false : true }))
+      .enter().append("g")
+      .attr("class", "g-label-element")
+      .attr("transform", function(d) { return "translate(" + x(d.year) + "," + y(d.val) + ")"; });
+
+    label.append("circle")
+      .attr("class","circle")
+      .attr("r", 3)
+      .style("fill", function(d) {return color(d.network); })
+      .on("mouseover", function(d){
+              d3.select(this)
+                .transition()
+                .duration(100)
+                .attr("r", 6)
+                .style("stroke", "#000")
+                .style("stroke-width",1)
+              d3.select("#tooltip")
+                .style("left", (d3.event.pageX) + 15 + "px")
+                .style("top", (d3.event.pageY) - 5 + "px")
+                .transition()
+                .style("visibility", "visible");
+              d3.select("#viewers")
+                .text(d.val + "m" );
+              d3.select("#show")
+                .text( d.show);
+                d3.select("#network")
+                .text( d.network );
+                d3.select("#year")
+                .text( d.year );
+           })
+
+           .on("mouseout", function(d){
+              d3.select(this)
+                .transition()
+                .attr("r", 3)
+                .style("stroke", "none")
+                .style("stroke-width", 0)
+              d3.select("#tooltip")
+                .transition()
+                .style("visibility", "hidden");
+           });
+
+
+      label.append("text")
+      .attr("class","network_name")
+      .attr("x", 10)
+      .attr("dy",5);
+
+});
+
+
+
+
+
+</script>
