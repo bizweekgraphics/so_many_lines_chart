@@ -10,6 +10,9 @@ body {
   font-family: Helvetica;
 }
 
+svg {
+  border: 5px solid black;
+}
 
 .axis path,
 .axis line {
@@ -101,9 +104,9 @@ text {
 var months,
     monthFormat = d3.time.format("%Y-%m");
 
-var margin = {top: 40, right: 70, bottom: 330, left: 60},
-    width = 630 - margin.left - margin.right,
-    height = 670 - margin.top - margin.bottom;
+var margin = {top: 40, right: 70, bottom: 180, left: 60},
+    width = 620 - margin.left - margin.right,
+    height = 520 - margin.top - margin.bottom;
 
 var x = d3.time.scale()
     .range([0, width]);
@@ -116,7 +119,8 @@ var color = d3.scale.category20();
 var voronoi = d3.geom.voronoi()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.value); })
-    .clipExtent([[-margin.left, -margin.top], [width + margin.right, height + margin.bottom]]);
+//    .clipExtent([[-margin.left, -margin.top], [width + margin.right, height + margin.bottom]]);
+    .clipExtent([[0,0], [width, height]]);
 
 var line = d3.svg.line()
     .interpolate("monotone")
@@ -131,7 +135,6 @@ var svg = d3.select("body").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 d3.tsv("market_cap.tsv", type, function(error, companies) {
-  console.log(companies);
   x.domain(d3.extent(months));
   y.domain([0, 150000000000, d3.max(companies, function(c) { return d3.max(c.values, function(d) { return d.value; }); })]).nice();
 
@@ -173,7 +176,7 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
       .attr("x", 4)
       .attr("dy", "-2em")
       .style("font-weight", "bold")
-      .text("Market Capitalization");
+      .text("Market cap.");
 
   
   svg.append("g")
@@ -244,7 +247,7 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
 		
 		var timespanContainer = svg.append("g")
 		  .attr("class", "timespan")
-		  .attr("transform","translate(0,"+(height+40)+")");
+		  .attr("transform","translate(0,"+(height+50)+")");
 		
 		var bar = timespanContainer.selectAll("line")
 			.data(timespan).enter()
@@ -252,20 +255,26 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
 					.attr("class", function(d) { return d.slug; },true);
 					
 		bar.append("line")
-					.attr("x1", function(d) { return x(d.ipo); })
-					.attr("x2", function(d) { return x(d.threshold); })
-					.attr("y1", function(d) { return y2(d.name); })
-					.attr("y2", function(d) { return y2(d.name); })
-					.style("stroke","black")
-					.style("stroke-width",0.5);
+			.attr("x1", function(d) { return x(d.ipo); })
+			.attr("x2", function(d) { return x(d.threshold); })
+			.attr("y1", function(d) { return y2(d.name); })
+			.attr("y2", function(d) { return y2(d.name); })
+			.style("stroke","black")
+			.style("stroke-width",0.5);
 					
 		bar.append("text")
-					.attr("x", function(d) { return x(d.threshold); })
-					.attr("y", function(d) { return y2(d.name); })
-					.attr("dy", "0.35em")
-					.attr("dx", "0.35em")
-					.style("opacity",0)
-					.text(function(d) { return Math.round(d.days/30.5)+" months"; });
+			.attr("x", function(d) { return x(d.threshold); })
+			.attr("y", function(d) { return y2(d.name); })
+			.attr("dy", "0.35em")
+			.attr("dx", "0.35em")
+			.style("opacity",0)
+			.text(function(d) { return Math.round(d.days/30.5)+" months"; });
+					
+		timespanContainer.append("text")
+			.attr("x", 4)
+			.attr("y", 25)
+			.attr("dy", "-2em")
+			.text("Time from IPO to $150b market cap:");
 	});
 
 
@@ -299,7 +308,6 @@ function type(d, i) {
       value: d[monthFormat(m)] * 1
     };
   });
-  console.log(city);
   return city;
 }
 
@@ -311,7 +319,6 @@ function typeTimespan(d, i) {
     threshold: new Date(d.threshold.substring(0,4),d.threshold.substring(5,7)),
     days: d.days
   };
-  console.log(city);
   return city;
 }
 
