@@ -157,9 +157,10 @@ path.arrow, polyline {
 .dek {
   text-align: center;
   font-size: 12px;
-    padding-top: 5px;
-  margin:0;
+    padding-top: 8px;
+  margin:0 auto;
   font-weight: bold;
+  width:600px;
 }
 
 #header {
@@ -178,7 +179,7 @@ path.arrow, polyline {
 
     <div id="header">
         <div class="hed_container"><p class="hed">RACING TO $150 BILLION</p></div>
-        <p class="dek">Fewer than 30 U.S. companies have reached a market cap of $150 billion. <br>Using the IPO date as the starting point, Facebook hit this benchmark fastest</p>
+        <p class="dek">Only 26 U.S. companies have reached a market cap of $150 billion. Using the IPO date as the starting point, Facebook hit this benchmark fastest. Roll over the lines below to see firm by firm data.</p>
     </div>
 
     <svg id="svg-canvas">
@@ -272,7 +273,7 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
       .innerTickSize(15)
 		  .scale(y)
 		  .orient("left")
-    			  .tickFormat(function(d) { return "$" + d/1000000000 + "b"})
+    			  .tickFormat(function(d) { return "$" + d/1000000000 + (d>0 ? "b": "")})
     			  .tickValues([0,150000000000,600000000000]))
             .append("text")
             .attr("x", 4)
