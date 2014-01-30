@@ -2,6 +2,17 @@
 <meta charset="utf-8">
 <style>
 
+
+@font-face {
+font-family:'BWHaasHead';
+src:url('bwhaasgroteskhead-95black.eot?#iefix') format('eot'),
+url('bwhaasgroteskhead-95black.woff') format('woff'),
+url('bwhaasgroteskhead-95black.ttf') format('truetype');
+font-style:normal;
+font-weight:700;
+font-stretch:normal
+}
+
 body {
   width: 630px;
   margin: 0;
@@ -100,9 +111,71 @@ text {
 	font-size: 12px;
 }
 
+path.arrow, polyline {
+  fill: none;
+  stroke: black;
+  stroke-width: 1;
+}
+
+#dontdothis {
+  position: absolute;
+  top:300px;
+  left:565px;
+  width:50px;
+  font-size: 12px;
+  text-align:center;
+  font-weight: bold;
+}
+
+.hed {
+  font-weight: bold;
+  text-align: center;
+  font-family: 'BWHaasHead';
+  font-size: 20px;
+  padding: 0;
+  margin:0;
+}
+
+.dek {
+  text-align: center;
+  font-size: 14px;
+    padding-top: 5px;
+  margin:0;
+}
+
+#header {
+  padding-bottom: 10px;
+}
+
+#data {
+  padding-top: 5px;
+  font-size: 9px;
+  text-align: right;
+}
+
 </style>
 <label id="form" for="show-voronoi">
 </label>
+
+    <div id="header">
+        <p class="hed">RACING TO $150 BILLION</p>
+        <p class="dek">Fewer than 30 U.S. companies have reached a $150 billion market cap. <br>Using the IPO date as the starting point, Facebook is on track to do it the fastest.</p>
+    </div>
+
+    <svg id="svg-canvas">
+    
+    <defs>
+      <!-- arrowhead for arrows -->
+      <marker id = "arrowhead" viewBox = "-10 -10 20 20" refX = "0" refY = "0" markerWidth = "20" markerHeight = "20" stroke-width = "1" orient = "auto">
+        <polyline stroke-linejoin="bevel" points="-6.72,-6.749 0.54,0 -6.72,6.749 "/>
+      </marker>
+    </defs>
+    
+    </svg>
+
+  <div id="dontdothis">Rising almost $50m per day!</div>
+   <div id="data">GRAPHIC BY BLOOMBERG BUSINESSWEEK. DATA: COMPILED BY BLOOMBERG.</div>
+
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
 
@@ -113,7 +186,7 @@ text {
 var months,
     monthFormat = d3.time.format("%Y-%m");
 
-var margin = {top: 40, right: 70, bottom: 180, left: 60},
+var margin = {top: 50, right: 70, bottom: 180, left: 60},
     width = 620 - margin.left - margin.right,
     height = 520 - margin.top - margin.bottom;
 
@@ -137,10 +210,10 @@ var line = d3.svg.line()
     .y(function(d) { return y(d.value); })
     .defined(function(d) { return d.value > 0; });
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#svg-canvas")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
-  .append("g")
+    .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 d3.tsv("market_cap.tsv", type, function(error, companies) {
@@ -177,13 +250,13 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
       .call(d3.svg.axis()
 		  .scale(y)
 		  .orient("left")
-			  .tickFormat(function(d) { return "$" + d/1000000000 + "b"})
-			  .tickValues([0,150000000000,600000000000]))
-      .append("text")
-      .attr("x", 4)
-      .attr("dy", "-2em")
-      .style("font-weight", "bold")
-      .text("Market cap.");
+    			  .tickFormat(function(d) { return "$" + d/1000000000 + "b"})
+    			  .tickValues([0,150000000000,600000000000]))
+            .append("text")
+            .attr("x", 4)
+            .attr("dy", "-2em")
+            .style("font-weight", "bold")
+            .text("Market cap.");
 
   
   svg.append("g")
@@ -209,6 +282,8 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
             "stroke-width" : "1px",
             "stroke-dasharray": ("3, 3")
         });
+
+ var annotationArrow = drawArrow (svg, [width + 40, 150], [width + 5, 120], 90, false);
 
   var focus = svg.append("g")
       .attr("transform", "translate(-100,-100)")
@@ -336,4 +411,60 @@ function typeTimespan(d, i) {
   return city;
 }
 
+
+function drawArrow(parent, from, to, degrees, clockwise) {
+  /* 
+  PARAMETERS:
+    parent:   the svg container or element to which to append the arrow
+    from:     the pixel coordinates from which to draw the arrow as an array [x,y], e.g. [100,200]
+    to:     works just like {from}
+    degrees:  the angle which the arc of the arrow will subtend. 
+          90 for a gentle arc, 180 for a bigger swoop.
+          beyond 180, it gets gentler again, because of the way SVG computes arc.
+          pass 0 or 360 for a straight arrow.
+    clockwise:  boolean determining whether arrow will swoop clockwise (true) or counterclockwise (false)
+  */
+  
+  /* 
+  FIRST, compute radius of circle from desired degrees for arc to subtend.
+    read up:  http://mathworld.wolfram.com/Chord.html
+          http://www.wolframalpha.com/input/?i=angle+subtended
+    n.b.: bizweek only uses circular arcs, but SVG allows for any ellipse, so r1 == r2 in SVG path below
+        bizweek arrows typically subtend 90 or 180 degrees
+  */
+  
+  // bound acceptable {degrees}, between 1 and 359
+  degrees = Math.max(degrees, 1);
+  degrees = Math.min(degrees, 359);
+  
+  // get the chord length ("height" {h}) between points, by pythagorus
+  var h = Math.sqrt(Math.pow((to[0]-from[0]),2)+Math.pow((to[1]-from[1]),2));
+  
+  // get the distance at which chord of height h subtends {angle} degrees
+  var radians = degrees * Math.PI/180;
+  var d = h / ( 2 * Math.tan(radians/2) );
+  
+  // get the radius {r} of the circumscribed circle
+  var r = Math.sqrt(Math.pow(d,2)+Math.pow((h/2),2));
+  
+  /*
+  SECOND, compose the corresponding SVG arc.
+    read up: http://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands
+    example: <path d = "M 200 50 a 90 90 0 0 1 100 0"/>
+  */
+  var path = "M " + from[0] + " " + from[1] + " a " + r + " " + r + " 0 0 "+(clockwise ? "1" : "0")+" " + (to[0]-from[0]) + " " + (to[1]-from[1]);
+  
+  // append path to given {parent} (with class .arrow)
+  var arrow = parent.append("path")
+    .attr("d", path)
+    .attr("marker-end", "url(#arrowhead)")
+    .attr("class", "arrow");
+  
+  // return a reference to the appended arrow
+  return arrow;
+}
+
+
 </script>
+
+
