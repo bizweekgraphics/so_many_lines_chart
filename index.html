@@ -56,7 +56,19 @@ body {
 .company-hover {
   fill: none;
   stroke: #ff00ff !important;
-  stroke-width: 1px;
+  stroke-width: 2px !important;
+}
+
+.timespan-hover line{
+  stroke: #ff00ff !important;
+  stroke-width: 2px !important;	
+}
+
+.timespan-hover text{
+	opacity:1 !important;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 0 2px 0 #fff, 2px 0 0 #fff, 0 -2px 0 #fff, -2px 0 0 #fff;
 }
 
 .company_name {
@@ -89,7 +101,7 @@ text {
 var months,
     monthFormat = d3.time.format("%Y-%m");
 
-var margin = {top: 40, right: 60, bottom: 330, left: 60},
+var margin = {top: 40, right: 70, bottom: 330, left: 60},
     width = 630 - margin.left - margin.right,
     height = 670 - margin.top - margin.bottom;
 
@@ -225,26 +237,41 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
 
 	//trying to do bars...
 	var y2 = d3.scale.ordinal()
-		.rangeRoundBands([0,width/6], .1);
+		.rangeRoundBands([0,width/4], .1);
 	d3.tsv("days_to_threshold.tsv", typeTimespan, function(error, timespan) {
 		y2.domain(timespan.map(function(d) { return d.name; }));
-		svg.append("g")
+		
+		
+		var timespanContainer = svg.append("g")
 		  .attr("class", "timespan")
-		  .attr("transform","translate(0,"+(height+30)+")")
-		  .selectAll("line")
+		  .attr("transform","translate(0,"+(height+40)+")");
+		
+		var bar = timespanContainer.selectAll("line")
 			.data(timespan).enter()
-				.append("line")
-				.attr("x1", function(d) { return x(d.ipo); })
-				.attr("x2", function(d) { return x(d.threshold); })
-				.attr("y1", function(d) { return y2(d.name); })
-				.attr("y2", function(d) { return y2(d.name); })
-				.style("stroke","black")
-				.style("stroke-width",0.5);
+				.append("g")
+					.attr("class", function(d) { return d.slug; },true);
+					
+		bar.append("line")
+					.attr("x1", function(d) { return x(d.ipo); })
+					.attr("x2", function(d) { return x(d.threshold); })
+					.attr("y1", function(d) { return y2(d.name); })
+					.attr("y2", function(d) { return y2(d.name); })
+					.style("stroke","black")
+					.style("stroke-width",0.5);
+					
+		bar.append("text")
+					.attr("x", function(d) { return x(d.threshold); })
+					.attr("y", function(d) { return y2(d.name); })
+					.attr("dy", "0.35em")
+					.attr("dx", "0.35em")
+					.style("opacity",0)
+					.text(function(d) { return Math.round(d.days/30.5)+" months"; });
 	});
 
 
   function mouseover(d) {
     d3.select(d.city.line).classed("company-hover", true);
+    d3.select("."+d.city.slug).classed("timespan-hover", true);
     d.city.line.parentNode.appendChild(d.city.line);
     focus.attr("transform", "translate(" + x(d.date) + "," + y(d.value) + ")");
     focus.select(".company_name").text(d.city.name);
@@ -253,6 +280,7 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
 
   function mouseout(d) {
     d3.select(d.city.line).classed("company-hover", false);
+    d3.select("."+d.city.slug).classed("timespan-hover", false);
     focus.attr("transform", "translate(-100,-100)");
   }
 });
@@ -261,6 +289,7 @@ function type(d, i) {
   if (!i) months = Object.keys(d).map(monthFormat.parse).filter(Number);
   var city = {
     name: d.name,
+    slug: d.name.replace(/ /,"-").replace("&","-").replace(".","-").replace(/ /,"-"),
     values: null
   };
   city.values = months.map(function(m) {
@@ -270,19 +299,19 @@ function type(d, i) {
       value: d[monthFormat(m)] * 1
     };
   });
+  console.log(city);
   return city;
 }
 
 function typeTimespan(d, i) {
-	console.log(d.ipo.substring(0,4));
-	console.log(d.ipo.substring(4,6));
   var city = {
     name: d.name,
+    slug: d.name.replace(/ /,"-").replace("&","-").replace(".","-").replace(/ /,"-"),
     ipo: new Date(d.ipo.substring(0,4),d.ipo.substring(5,7)),
     threshold: new Date(d.threshold.substring(0,4),d.threshold.substring(5,7)),
     days: d.days
   };
-	console.log(city);
+  console.log(city);
   return city;
 }
 
