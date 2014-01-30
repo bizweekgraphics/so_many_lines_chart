@@ -22,7 +22,7 @@ body {
 }
 
 svg {
-  border: 5px solid black;
+  border: 7px solid black;
 }
 
 circle {
@@ -132,15 +132,24 @@ path.arrow, polyline {
   text-align: center;
   font-family: 'BWHaasHead';
   font-size: 20px;
-  padding: 0;
+  padding: 5px;
   margin:0;
+  color:#fff;
+}
+
+.hed_container {
+    background-color: #000;
+    width:250px;
+    height:35px;
+    margin:0 auto;
 }
 
 .dek {
   text-align: center;
-  font-size: 14px;
+  font-size: 12px;
     padding-top: 5px;
   margin:0;
+  font-weight: bold;
 }
 
 #header {
@@ -158,8 +167,8 @@ path.arrow, polyline {
 </label>
 
     <div id="header">
-        <p class="hed">RACING TO $150 BILLION</p>
-        <p class="dek">Fewer than 30 U.S. companies have reached a $150 billion market cap. <br>Using the IPO date as the starting point, Facebook is on track to do it the fastest.</p>
+        <div class="hed_container"><p class="hed">RACING TO $150 BILLION</p></div>
+        <p class="dek">Fewer than 30 U.S. companies have reached a market cap of $150 billion. <br>Using the IPO date as the starting point, Facebook hit this benchmark fastest.</p>
     </div>
 
     <svg id="svg-canvas">
@@ -248,6 +257,7 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
   svg.append("g")
       .attr("class", "axis axis--y")
       .call(d3.svg.axis()
+      .innerTickSize(15)
 		  .scale(y)
 		  .orient("left")
     			  .tickFormat(function(d) { return "$" + d/1000000000 + "b"})
@@ -265,7 +275,8 @@ d3.tsv("market_cap.tsv", type, function(error, companies) {
       .data(companies)
       .enter().append("path")
       .attr("d", function(d) { d.line = this; return line(d.values); })
-	   .style("stroke", function(d) { if (d.name == "Facebook") {return "rgb(000,131,202)"} });
+	   .style("stroke", function(d) { if (d.name == "Facebook") {return "rgb(000,131,202)"} })
+     .style("stroke-width", function(d) { if (d.name == "Facebook") {return "2px"} });;
 
 
   svg.append("line")
